@@ -4,6 +4,7 @@ from fastapi import Depends, FastAPI
 from pydantic import BaseModel, HttpUrl
 
 from remote_inference.auth import verify_api_key
+from remote_inference.ml import embedder
 
 app = FastAPI(title="Remote Inference API")
 
@@ -24,11 +25,11 @@ async def embed_image(
     _: None = Depends(verify_api_key)
 ) -> dict:
     """Generate fashion embeddings from image URLs."""
-    # TODO: Implement image embedding
-    # For now return dummy vectors (768-dimensional zeros) for each URL
-    dummy_vector = [0.0] * 768
+    embeddings = embedder.get_image_embeddings(
+        [str(url) for url in query.image_urls]
+    )
     return {
-        "embeddings": [dummy_vector for _ in query.image_urls],
+        "embeddings": embeddings,
         "metadata": {
             "urls": [str(url) for url in query.image_urls]
         }
@@ -41,11 +42,9 @@ async def embed_text(
     _: None = Depends(verify_api_key)
 ) -> dict:
     """Generate fashion embeddings from text queries."""
-    # TODO: Implement text embedding
-    # For now return dummy vectors (768-dimensional zeros) for each text
-    dummy_vector = [0.0] * 768
+    embeddings = embedder.get_text_embeddings(query.texts)
     return {
-        "embeddings": [dummy_vector for _ in query.texts],
+        "embeddings": embeddings,
         "metadata": {
             "texts": query.texts
         }
