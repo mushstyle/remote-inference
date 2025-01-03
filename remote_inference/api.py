@@ -25,8 +25,8 @@ async def embed_image(
 ) -> dict:
     """Generate fashion embeddings from image URLs."""
     # TODO: Implement image embedding
-    # For now return dummy vectors (512-dimensional zeros) for each URL
-    dummy_vector = [0.0] * 512
+    # For now return dummy vectors (768-dimensional zeros) for each URL
+    dummy_vector = [0.0] * 768
     return {
         "embeddings": [dummy_vector for _ in query.image_urls],
         "metadata": {
@@ -42,8 +42,8 @@ async def embed_text(
 ) -> dict:
     """Generate fashion embeddings from text queries."""
     # TODO: Implement text embedding
-    # For now return dummy vectors (512-dimensional zeros) for each text
-    dummy_vector = [0.0] * 512
+    # For now return dummy vectors (768-dimensional zeros) for each text
+    dummy_vector = [0.0] * 768
     return {
         "embeddings": [dummy_vector for _ in query.texts],
         "metadata": {

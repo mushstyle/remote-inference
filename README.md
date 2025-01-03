@@ -85,8 +85,8 @@ Both endpoints return embeddings in the format:
 ```json
 {
     "embeddings": [
-        [0.1, 0.2, ...],  // 512-dimensional vector for first input
-        [0.3, 0.4, ...]   // 512-dimensional vector for second input
+        [0.1, 0.2, ...],  // 768-dimensional vector for first input
+        [0.3, 0.4, ...]   // 768-dimensional vector for second input
     ],
     "metadata": {
         "urls": ["...", "..."]  // For images
