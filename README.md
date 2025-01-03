@@ -38,7 +38,7 @@ After installation and configuration:
 remote-inference
 ```
 
-This will start the server on port 8000. The API is protected by the API key specified in `.env`.
+This will start the server on port 70001. The API is protected by the API key specified in `.env`.
 
 ## API Endpoints
 
@@ -53,7 +53,7 @@ curl -H "X-API-Key: your_api_key_here" ...
 
 Generate embeddings from image URLs:
 ```bash
-curl -X POST http://localhost:8000/api/marqo-fashionsiglip/image \
+curl -X POST http://localhost:70001/api/marqo-fashionsiglip/image \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your_api_key_here" \
   -d '{
@@ -68,7 +68,7 @@ curl -X POST http://localhost:8000/api/marqo-fashionsiglip/image \
 
 Generate embeddings from text queries:
 ```bash
-curl -X POST http://localhost:8000/api/marqo-fashionsiglip/text \
+curl -X POST http://localhost:70001/api/marqo-fashionsiglip/text \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your_api_key_here" \
   -d '{

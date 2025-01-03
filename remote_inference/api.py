@@ -52,7 +52,7 @@ async def embed_text(
 
 
 if __name__ == "__main__":
-    port = 8000
+    port = 70001
     print(f"Starting API server on port {port}")
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=port)
