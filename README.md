@@ -58,8 +58,8 @@ curl -X POST http://localhost:70001/api/marqo-fashionsiglip/image \
   -H "X-API-Key: your_api_key_here" \
   -d '{
     "image_urls": [
-      "https://example.com/image1.jpg",
-      "https://example.com/image2.jpg"
+      "https://dev-mush-frontend-authstack-profilebucket8bf528d8-osju5g4in0xb.s3.eu-central-1.amazonaws.com/d7dba2b1-3bb2-49af-b142-71a9ad7457ae.png",
+      "https://dev-mush-frontend-authstack-profilebucket8bf528d8-osju5g4in0xb.s3.eu-central-1.amazonaws.com/fb00bcea-964c-43e4-9e3b-09e4ccf845fa.png"
     ]
   }'
 ```
