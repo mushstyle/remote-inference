@@ -1,7 +1,9 @@
 """API server for remote inference."""
-from typing import Union
-from fastapi import FastAPI, File, UploadFile
+from typing import Annotated, Union
+from fastapi import Depends, FastAPI, File, UploadFile
 from pydantic import BaseModel
+
+from remote_inference.auth import verify_api_key
 
 app = FastAPI(title="Remote Inference API")
 
@@ -12,7 +14,10 @@ class TextQuery(BaseModel):
 
 
 @app.post("/api/marqo-fashionsiglip/image")
-async def embed_image(file: UploadFile = File(...)) -> dict:
+async def embed_image(
+    file: UploadFile = File(...),
+    _: None = Depends(verify_api_key)
+) -> dict:
     """Generate fashion embedding from image."""
     # TODO: Implement image embedding
     return {
@@ -25,7 +30,10 @@ async def embed_image(file: UploadFile = File(...)) -> dict:
 
 
 @app.post("/api/marqo-fashionsiglip/text")
-async def embed_text(query: TextQuery) -> dict:
+async def embed_text(
+    query: TextQuery,
+    _: None = Depends(verify_api_key)
+) -> dict:
     """Generate fashion embedding from text."""
     # TODO: Implement text embedding
     return {
