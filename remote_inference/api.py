@@ -3,7 +3,7 @@ from typing import Annotated, List
 from fastapi import Depends, FastAPI
 from pydantic import BaseModel, HttpUrl
 
-from remote_inference.auth import verify_api_key
+from remote_inference.auth import get_api_key
 from remote_inference.ml import embedder
 
 app = FastAPI(title="Remote Inference API")
@@ -22,7 +22,7 @@ class TextQuery(BaseModel):
 @app.post("/api/marqo-fashionsiglip/image")
 async def embed_image(
     query: ImageQuery,
-    _: None = Depends(verify_api_key)
+    _: None = Depends(get_api_key)
 ) -> dict:
     """Generate fashion embeddings from image URLs."""
     embeddings = embedder.get_image_embeddings(
@@ -39,7 +39,7 @@ async def embed_image(
 @app.post("/api/marqo-fashionsiglip/text")
 async def embed_text(
     query: TextQuery,
-    _: None = Depends(verify_api_key)
+    _: None = Depends(get_api_key)
 ) -> dict:
     """Generate fashion embeddings from text queries."""
     embeddings = embedder.get_text_embeddings(query.texts)
