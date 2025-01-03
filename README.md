@@ -39,9 +39,14 @@ This will start the server on port 8000.
 #### Image Embedding
 ```bash
 curl -X POST http://localhost:8000/api/marqo-fashionsiglip/image \
-  -H "Content-Type: multipart/form-data" \
+  -H "Content-Type: application/json" \
   -H "X-API-Key: your_api_key_here" \
-  -F "file=@image.jpg"
+  -d '{
+    "image_urls": [
+      "https://example.com/image1.jpg",
+      "https://example.com/image2.jpg"
+    ]
+  }'
 ```
 
 #### Text Embedding
@@ -49,15 +54,25 @@ curl -X POST http://localhost:8000/api/marqo-fashionsiglip/image \
 curl -X POST http://localhost:8000/api/marqo-fashionsiglip/text \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your_api_key_here" \
-  -d '{"text": "blue denim jacket"}'
+  -d '{
+    "texts": [
+      "blue denim jacket",
+      "red silk dress"
+    ]
+  }'
 ```
 
 Both endpoints return embeddings in the format:
 ```json
 {
-    "embedding": [],
+    "embeddings": [
+        [0.0, 0.0, ...],  // 512-dimensional vector for first input
+        [0.0, 0.0, ...]   // 512-dimensional vector for second input
+    ],
     "metadata": {
-        // Request-specific metadata
+        "urls": ["...", "..."]  // For images
+        // or
+        "texts": ["...", "..."] // For text
     }
 }
 ```

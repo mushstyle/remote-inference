@@ -1,30 +1,36 @@
 """API server for remote inference."""
-from typing import Annotated, Union
-from fastapi import Depends, FastAPI, File, UploadFile
-from pydantic import BaseModel
+from typing import Annotated, List
+from fastapi import Depends, FastAPI
+from pydantic import BaseModel, HttpUrl
 
 from remote_inference.auth import verify_api_key
 
 app = FastAPI(title="Remote Inference API")
 
 
+class ImageQuery(BaseModel):
+    """Image URLs for fashion embedding."""
+    image_urls: List[HttpUrl]
+
+
 class TextQuery(BaseModel):
-    """Text query for fashion embedding."""
-    text: str
+    """Text queries for fashion embedding."""
+    texts: List[str]
 
 
 @app.post("/api/marqo-fashionsiglip/image")
 async def embed_image(
-    file: UploadFile = File(...),
+    query: ImageQuery,
     _: None = Depends(verify_api_key)
 ) -> dict:
-    """Generate fashion embedding from image."""
+    """Generate fashion embeddings from image URLs."""
     # TODO: Implement image embedding
+    # For now return dummy vectors (512-dimensional zeros) for each URL
+    dummy_vector = [0.0] * 512
     return {
-        "embedding": [],  # Will be vector
+        "embeddings": [dummy_vector for _ in query.image_urls],
         "metadata": {
-            "filename": file.filename,
-            "content_type": file.content_type
+            "urls": [str(url) for url in query.image_urls]
         }
     }
 
@@ -34,12 +40,14 @@ async def embed_text(
     query: TextQuery,
     _: None = Depends(verify_api_key)
 ) -> dict:
-    """Generate fashion embedding from text."""
+    """Generate fashion embeddings from text queries."""
     # TODO: Implement text embedding
+    # For now return dummy vectors (512-dimensional zeros) for each text
+    dummy_vector = [0.0] * 512
     return {
-        "embedding": [],  # Will be vector
+        "embeddings": [dummy_vector for _ in query.texts],
         "metadata": {
-            "text": query.text
+            "texts": query.texts
         }
     }
 
