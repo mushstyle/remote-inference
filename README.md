@@ -1,42 +1,57 @@
 # Remote Inference
 
-Python package for remote inference.
+API server for remote fashion embeddings.
 
-## Installation
+## Development Setup
 
-Using uv (recommended):
-```bash
-uv pip install -e .
-```
+1. Requirements:
+   - Python 3.11
+   - [uv](https://github.com/astral-sh/uv)
 
-## Usage
+2. Environment setup:
+   ```bash
+   # Clone the repository
+   git clone git@github.com:mushstyle/remote-inference.git
+   cd remote-inference
 
-### Running the Server
+   # Create and activate virtual environment
+   uv venv --python=3.11
+   source .venv/bin/activate
 
-After installation, run:
+   # Install in development mode
+   uv pip install -e .
+   ```
+
+3. Environment configuration:
+   ```bash
+   # Copy example environment file
+   cp .env.example .env
+
+   # Edit .env and set your API key:
+   API_KEY=your_secret_key_here
+   ```
+
+## Running the Server
+
+After installation and configuration:
 ```bash
 remote-inference
 ```
 
-This will start the server on port 8000.
+This will start the server on port 8000. The API is protected by the API key specified in `.env`.
+
+## API Endpoints
 
 ### Authentication
 
-1. Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
+All endpoints require an API key passed in the `X-API-Key` header:
+```bash
+curl -H "X-API-Key: your_api_key_here" ...
+```
 
-2. Edit `.env` and set your API key:
-   ```
-   API_KEY=your_secret_key_here
-   ```
+### Image Embedding
 
-3. Include the API key in all requests using the `X-API-Key` header.
-
-### API Endpoints
-
-#### Image Embedding
+Generate embeddings from image URLs:
 ```bash
 curl -X POST http://localhost:8000/api/marqo-fashionsiglip/image \
   -H "Content-Type: application/json" \
@@ -49,7 +64,9 @@ curl -X POST http://localhost:8000/api/marqo-fashionsiglip/image \
   }'
 ```
 
-#### Text Embedding
+### Text Embedding
+
+Generate embeddings from text queries:
 ```bash
 curl -X POST http://localhost:8000/api/marqo-fashionsiglip/text \
   -H "Content-Type: application/json" \
@@ -62,12 +79,14 @@ curl -X POST http://localhost:8000/api/marqo-fashionsiglip/text \
   }'
 ```
 
+### Response Format
+
 Both endpoints return embeddings in the format:
 ```json
 {
     "embeddings": [
-        [0.0, 0.0, ...],  // 512-dimensional vector for first input
-        [0.0, 0.0, ...]   // 512-dimensional vector for second input
+        [0.1, 0.2, ...],  // 512-dimensional vector for first input
+        [0.3, 0.4, ...]   // 512-dimensional vector for second input
     ],
     "metadata": {
         "urls": ["...", "..."]  // For images
