@@ -38,24 +38,29 @@ After installation and configuration:
 remote-inference
 ```
 
-This will start the server on port 70001. The API is protected by the API key specified in `.env`.
+This will start the server on port 8000. The API is protected by the API key specified in `.env`.
 
 ## API Endpoints
 
 ### Authentication
 
-All endpoints require an API key passed in the `X-API-Key` header:
+All endpoints require an API key passed in the `X-API-Key` header. First set your API key:
 ```bash
-curl -H "X-API-Key: your_api_key_here" ...
+export API_KEY=your_api_key_here
+curl -H "X-API-Key: $API_KEY" ...
 ```
 
 ### Image Embedding
 
 Generate embeddings from image URLs:
 ```bash
-curl -X POST http://localhost:70001/api/marqo-fashionsiglip/image \
+# Set your remote endpoint and API key
+export REMOTE_HOST=localhost:8000  # or your remote host:port
+export API_KEY=your_api_key_here   # your API key
+
+curl -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/image" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your_api_key_here" \
+  -H "X-API-Key: $API_KEY" \
   -d '{
     "image_urls": [
       "https://dev-mush-frontend-authstack-profilebucket8bf528d8-osju5g4in0xb.s3.eu-central-1.amazonaws.com/d7dba2b1-3bb2-49af-b142-71a9ad7457ae.png",
@@ -68,9 +73,9 @@ curl -X POST http://localhost:70001/api/marqo-fashionsiglip/image \
 
 Generate embeddings from text queries:
 ```bash
-curl -X POST http://localhost:70001/api/marqo-fashionsiglip/text \
+curl -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/text" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: your_api_key_here" \
+  -H "X-API-Key: $API_KEY" \
   -d '{
     "texts": [
       "blue denim jacket",
