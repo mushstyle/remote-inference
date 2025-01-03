@@ -62,7 +62,11 @@ export API_KEY=your_api_key_here   # your API key
 export IMAGE_URL1="https://dev-mush-frontend-authstack-profilebucket8bf528d8-osju5g4in0xb.s3.eu-central-1.amazonaws.com/d7dba2b1-3bb2-49af-b142-71a9ad7457ae.png"
 export IMAGE_URL2="https://dev-mush-frontend-authstack-profilebucket8bf528d8-osju5g4in0xb.s3.eu-central-1.amazonaws.com/fb00bcea-964c-43e4-9e3b-09e4ccf845fa.png"
 
+# Multiple images
 curl -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/image" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"image_urls\":[\"$IMAGE_URL1\",\"$IMAGE_URL2\"]}"
+
+# Single image
+curl -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/image" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"image_urls\":[\"$IMAGE_URL1\"]}"
 ```
 
 ### Text Embedding
@@ -73,7 +77,11 @@ Generate embeddings from text queries:
 export TEXT1="blue denim jacket"
 export TEXT2="red silk dress"
 
+# Multiple texts
 curl -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/text" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"texts\":[\"$TEXT1\",\"$TEXT2\"]}"
+
+# Single text
+curl -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/text" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"texts\":[\"$TEXT1\"]}"
 ```
 
 ### Response Format
