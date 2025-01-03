@@ -4,9 +4,15 @@ version = "0.1.0"
 description = "Remote inference package"
 requires-python = ">=3.7"
 dependencies = [
-    # Add dependencies here
+    "fastapi",
+    "uvicorn",
+    "python-multipart",  # for file uploads
+    "pydantic>=2.0"
 ]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project.scripts]
+remote-inference = "remote_inference.cli:main"
