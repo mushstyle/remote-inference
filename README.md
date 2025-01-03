@@ -47,7 +47,7 @@ This will start the server on port 8000. The API is protected by the API key spe
 All endpoints require an API key passed in the `X-API-Key` header. First set your API key:
 ```bash
 export API_KEY=your_api_key_here
-curl -H "X-API-Key: $API_KEY" ...
+curl -s -H "X-API-Key: $API_KEY" ...
 ```
 
 ### Image Embedding
@@ -63,10 +63,10 @@ export IMAGE_URL1="https://dev-mush-frontend-authstack-profilebucket8bf528d8-osj
 export IMAGE_URL2="https://dev-mush-frontend-authstack-profilebucket8bf528d8-osju5g4in0xb.s3.eu-central-1.amazonaws.com/fb00bcea-964c-43e4-9e3b-09e4ccf845fa.png"
 
 # Multiple images
-curl -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/image" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"image_urls\":[\"$IMAGE_URL1\",\"$IMAGE_URL2\"]}"
+curl -s -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/image" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"image_urls\":[\"$IMAGE_URL1\",\"$IMAGE_URL2\"]}"
 
 # Single image
-curl -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/image" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"image_urls\":[\"$IMAGE_URL1\"]}"
+curl -s -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/image" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"image_urls\":[\"$IMAGE_URL1\"]}"
 ```
 
 ### Text Embedding
@@ -78,10 +78,10 @@ export TEXT1="blue denim jacket"
 export TEXT2="red silk dress"
 
 # Multiple texts
-curl -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/text" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"texts\":[\"$TEXT1\",\"$TEXT2\"]}"
+curl -s -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/text" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"texts\":[\"$TEXT1\",\"$TEXT2\"]}"
 
 # Single text
-curl -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/text" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"texts\":[\"$TEXT1\"]}"
+curl -s -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/text" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"texts\":[\"$TEXT1\"]}"
 ```
 
 ### Response Format
