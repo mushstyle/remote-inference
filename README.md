@@ -100,3 +100,16 @@ Both endpoints return embeddings in the format:
     }
 }
 ```
+
+### Background Removal
+
+Remove background from an image and return transparent PNG:
+```bash
+# Example usage
+curl -X POST "http://$REMOTE_HOST/api/v1/remove-background" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d '{"image_url": "https://example.com/image.jpg"}' --output removed_background.png
+
+# Test with sample fashion image (ready to use)
+curl -X POST "http://77.104.167.149:48209/api/v1/remove-background" -H "Content-Type: application/json" -H "X-API-Key: timtime" -d '{"image_url": "https://static.zara.net/assets/public/3e84/6a36/8df34cee99cb/d4fd95f854ac/04087429600-e1/04087429600-e1.jpg?ts=1722438373817&w=850"}' --output removed_background.png
+```
+
+The endpoint returns a PNG image with transparent background. Any errors will be returned as plain text with a 400 status code.

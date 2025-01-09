@@ -1,6 +1,7 @@
 """Background removal using BiRefNet."""
 import base64
 import io
+import time
 from typing import Tuple, Union
 import torch
 from torchvision import transforms
@@ -14,6 +15,11 @@ class BackgroundRemover:
     def __init__(self):
         """Initialize the BiRefNet model."""
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        print(f"BackgroundRemover initializing with device: {self.device}")
+        if self.device == "cuda":
+            print(f"CUDA device name: {torch.cuda.get_device_name()}")
+            print(f"CUDA memory allocated: {torch.cuda.memory_allocated()/1e9:.2f} GB")
+            print(f"CUDA memory cached: {torch.cuda.memory_reserved()/1e9:.2f} GB")
         self.model = None
         self.image_size = (1024, 1024)
         self.transform_image = transforms.Compose([
@@ -25,6 +31,8 @@ class BackgroundRemover:
     def load_model(self):
         """Load the BiRefNet model if not already loaded."""
         if self.model is None:
+            print("Loading BiRefNet model...")
+            load_start = time.time()
             self.model = AutoModelForImageSegmentation.from_pretrained(
                 'ZhengPeng7/BiRefNet', 
                 trust_remote_code=True
@@ -32,6 +40,10 @@ class BackgroundRemover:
             torch.set_float32_matmul_precision(['high', 'highest'][0])
             self.model.to(self.device)
             self.model.eval()
+            load_time = time.time() - load_start
+            print(f"Model loaded in {load_time:.2f}s")
+            if self.device == "cuda":
+                print(f"CUDA memory after model load: {torch.cuda.memory_allocated()/1e9:.2f} GB")
 
     def load_image_from_url(self, url: Union[str, HttpUrl]) -> Image.Image:
         """Load an image from a URL."""
@@ -52,8 +64,10 @@ class BackgroundRemover:
                 - extracted_image: PIL Image with transparency
                 - mask: PIL Image of the mask
         """
+        start_time = time.time()
         self.load_model()
-
+        print(f"\nProcessing image on {self.device}...")
+        
         # Handle input image
         if isinstance(image, (str, HttpUrl)):
             if str(image).startswith(('http://', 'https://')):
@@ -69,12 +83,20 @@ class BackgroundRemover:
         input_tensor = self.transform_image(source_image).unsqueeze(0).to(self.device)
         
         with torch.no_grad():
+            inference_start = time.time()
             preds = self.model(input_tensor)[-1].sigmoid().cpu()
+            inference_time = time.time() - inference_start
+            print(f"Inference time: {inference_time:.2f}s")
+            if self.device == "cuda":
+                print(f"CUDA memory during inference: {torch.cuda.memory_allocated()/1e9:.2f} GB")
         
         pred = preds[0].squeeze()
         pred_pil = transforms.ToPILImage()(pred)
         mask = pred_pil.resize(source_image.size)
         source_image.putalpha(mask)
+        
+        total_time = time.time() - start_time
+        print(f"Total processing time: {total_time:.2f}s")
         
         return source_image, mask
 
