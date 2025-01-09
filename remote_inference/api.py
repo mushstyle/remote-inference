@@ -71,8 +71,13 @@ async def remove_background_endpoint(
     _: None = Depends(get_api_key)
 ) -> Response:
     """Remove background from image at URL and return the processed image."""
+    print(f"\nProcessing background removal request for: {request.image_url}")
     try:
+        import sys
+        sys.stdout.flush()  # Ensure prints are flushed immediately
         image_buffer, mime_type = background_removal.remove_background(request.image_url)
+        print("Background removal completed successfully")
+        sys.stdout.flush()
         return Response(
             content=image_buffer.getvalue(),
             media_type=mime_type
