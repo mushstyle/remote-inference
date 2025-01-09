@@ -30,8 +30,6 @@ class BackgroundRemover:
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
-        # Pre-allocate reusable tensors
-        self.input_tensor = torch.zeros((1, 3, *self.image_size), device=self.device)
 
     def load_model(self):
         """Load the BiRefNet model if not already loaded."""
@@ -52,13 +50,11 @@ class BackgroundRemover:
 
     def load_image_from_url(self, url: Union[str, HttpUrl]) -> Image.Image:
         """Load an image from a URL."""
-        # Use stream=True to start downloading immediately
-        with requests.get(str(url), stream=True) as response:
-            response.raise_for_status()
-            image_bytes = io.BytesIO(response.raw.read())
-            # Use PILLOW_LOAD_TRUNCATED_IMAGES=1 for faster loading
-            Image.LOAD_TRUNCATED_IMAGES = True
-            return Image.open(image_bytes).convert('RGB')
+        # Standard request without streaming for reliability
+        response = requests.get(str(url))
+        response.raise_for_status()
+        image_bytes = io.BytesIO(response.content)
+        return Image.open(image_bytes).convert('RGB')
 
     def extract_object(self, image: Union[str, HttpUrl, Image.Image]) -> Tuple[Image.Image, Image.Image]:
         """
@@ -92,15 +88,14 @@ class BackgroundRemover:
 
         # Preprocessing time measurement
         preprocess_start = time.time()
-        # Reuse pre-allocated tensor
-        self.transform_image(source_image).unsqueeze_(0).to(self.device, non_blocking=True, copy=self.input_tensor)
+        input_tensor = self.transform_image(source_image).unsqueeze(0).to(self.device, non_blocking=True)
         preprocess_time = time.time() - preprocess_start
         print(f"Preprocess time: {preprocess_time:.2f}s")
         
         # Inference
         with torch.no_grad(), torch.cuda.amp.autocast():
             inference_start = time.time()
-            preds = self.model(self.input_tensor)[-1].sigmoid()
+            preds = self.model(input_tensor)[-1].sigmoid()
             # Keep on GPU for post-processing
             inference_time = time.time() - inference_start
             print(f"Inference time: {inference_time:.2f}s")
