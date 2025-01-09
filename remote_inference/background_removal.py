@@ -20,6 +20,9 @@ class BackgroundRemover:
             print(f"CUDA device name: {torch.cuda.get_device_name()}")
             print(f"CUDA memory allocated: {torch.cuda.memory_allocated()/1e9:.2f} GB")
             print(f"CUDA memory cached: {torch.cuda.memory_reserved()/1e9:.2f} GB")
+            # Pin memory for faster data transfer to GPU
+            torch.cuda.empty_cache()
+            torch.backends.cudnn.benchmark = True
         self.model = None
         self.image_size = (1024, 1024)
         self.transform_image = transforms.Compose([
@@ -27,6 +30,8 @@ class BackgroundRemover:
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
+        # Pre-allocate reusable tensors
+        self.input_tensor = torch.zeros((1, 3, *self.image_size), device=self.device)
 
     def load_model(self):
         """Load the BiRefNet model if not already loaded."""
@@ -47,10 +52,13 @@ class BackgroundRemover:
 
     def load_image_from_url(self, url: Union[str, HttpUrl]) -> Image.Image:
         """Load an image from a URL."""
-        response = requests.get(str(url))
-        response.raise_for_status()
-        image_bytes = io.BytesIO(response.content)
-        return Image.open(image_bytes).convert('RGB')
+        # Use stream=True to start downloading immediately
+        with requests.get(str(url), stream=True) as response:
+            response.raise_for_status()
+            image_bytes = io.BytesIO(response.raw.read())
+            # Use PILLOW_LOAD_TRUNCATED_IMAGES=1 for faster loading
+            Image.LOAD_TRUNCATED_IMAGES = True
+            return Image.open(image_bytes).convert('RGB')
 
     def extract_object(self, image: Union[str, HttpUrl, Image.Image]) -> Tuple[Image.Image, Image.Image]:
         """
@@ -68,7 +76,8 @@ class BackgroundRemover:
         self.load_model()
         print(f"\nProcessing image on {self.device}...")
         
-        # Handle input image
+        # Download time measurement
+        download_start = time.time()
         if isinstance(image, (str, HttpUrl)):
             if str(image).startswith(('http://', 'https://')):
                 source_image = self.load_image_from_url(image)
@@ -78,22 +87,36 @@ class BackgroundRemover:
             source_image = image
         else:
             raise ValueError("image must be a URL string, file path, or PIL Image")
+        download_time = time.time() - download_start
+        print(f"Download time: {download_time:.2f}s")
 
-        # Transform and predict
-        input_tensor = self.transform_image(source_image).unsqueeze(0).to(self.device)
+        # Preprocessing time measurement
+        preprocess_start = time.time()
+        # Reuse pre-allocated tensor
+        self.transform_image(source_image).unsqueeze_(0).to(self.device, non_blocking=True, copy=self.input_tensor)
+        preprocess_time = time.time() - preprocess_start
+        print(f"Preprocess time: {preprocess_time:.2f}s")
         
-        with torch.no_grad():
+        # Inference
+        with torch.no_grad(), torch.cuda.amp.autocast():
             inference_start = time.time()
-            preds = self.model(input_tensor)[-1].sigmoid().cpu()
+            preds = self.model(self.input_tensor)[-1].sigmoid()
+            # Keep on GPU for post-processing
             inference_time = time.time() - inference_start
             print(f"Inference time: {inference_time:.2f}s")
             if self.device == "cuda":
                 print(f"CUDA memory during inference: {torch.cuda.memory_allocated()/1e9:.2f} GB")
         
+        # Post-processing time measurement
+        postprocess_start = time.time()
         pred = preds[0].squeeze()
+        if self.device == "cuda":
+            pred = pred.cpu()
         pred_pil = transforms.ToPILImage()(pred)
         mask = pred_pil.resize(source_image.size)
         source_image.putalpha(mask)
+        postprocess_time = time.time() - postprocess_start
+        print(f"Postprocess time: {postprocess_time:.2f}s")
         
         total_time = time.time() - start_time
         print(f"Total processing time: {total_time:.2f}s")
