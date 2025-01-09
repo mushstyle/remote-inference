@@ -1,11 +1,12 @@
 """API server for remote inference."""
 import time
 from typing import Annotated, List
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Response
 from pydantic import BaseModel, HttpUrl
 
 from remote_inference.auth import get_api_key
 from remote_inference.ml import embedder
+from remote_inference import background_removal
 
 app = FastAPI(title="Remote Inference API")
 
@@ -57,6 +58,31 @@ async def embed_text(
             "time_seconds": elapsed
         }
     }
+
+
+class BackgroundRemovalRequest(BaseModel):
+    """Request for background removal."""
+    image_url: HttpUrl
+
+
+@app.post("/api/v1/remove-background", response_class=Response)
+async def remove_background_endpoint(
+    request: BackgroundRemovalRequest,
+    _: None = Depends(get_api_key)
+) -> Response:
+    """Remove background from image at URL and return the processed image."""
+    try:
+        image_buffer, mime_type = background_removal.remove_background(request.image_url)
+        return Response(
+            content=image_buffer.getvalue(),
+            media_type=mime_type
+        )
+    except ValueError as e:
+        return Response(
+            content=str(e),
+            media_type="text/plain",
+            status_code=400
+        )
 
 
 if __name__ == "__main__":

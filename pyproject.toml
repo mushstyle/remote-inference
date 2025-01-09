@@ -10,7 +10,27 @@ dependencies = [
     "pydantic>=2.0",
     "python-dotenv",
     "requests",
+    # Core ML dependencies
+    "torch",
+    "torchvision",
+    "numpy<2",
     "transformers",
+    # Image processing
+    "opencv-python",
+    "pillow",
+    # ML libraries
+    "timm",
+    "scipy",
+    "scikit-image",
+    "kornia",
+    "einops",
+    # ML infrastructure
+    "huggingface-hub>0.25",
+    "accelerate",
+    # Utils
+    "tqdm",
+    "prettytable",
+    # Existing dependencies
     "open-clip-torch"
 ]
 
