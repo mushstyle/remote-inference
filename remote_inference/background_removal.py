@@ -130,6 +130,14 @@ class BackgroundRemover:
         try:
             # Process image and get result
             result_image, _ = self.extract_object(image_url)
+
+            # Crop out excess transparent area
+            # Get bounding box of non-transparent pixels
+            bbox = result_image.getbbox()
+            if bbox:
+                result_image = result_image.crop(bbox)
+            else:
+                print("No non-transparent pixels found, returning original image")
             
             # Convert to buffer
             img_buffer = io.BytesIO()
