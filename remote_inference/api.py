@@ -1,7 +1,7 @@
 """API server for remote inference."""
 import time
 from typing import Annotated, List
-from fastapi import Depends, FastAPI, Response
+from fastapi import Depends, FastAPI, Response, status
 from pydantic import BaseModel, HttpUrl
 
 from remote_inference.auth import get_api_key
@@ -19,6 +19,14 @@ class ImageQuery(BaseModel):
 class TextQuery(BaseModel):
     """Text queries for fashion embedding."""
     texts: List[str]
+
+
+@app.get("/health", status_code=status.HTTP_200_OK)
+async def health_check():
+    """Health check endpoint."""
+    # Returns a simple 200 OK response to indicate the service is running.
+    # No body content is required by the health check specifications.
+    return {"status": "ok"}
 
 
 @app.post("/api/marqo-fashionsiglip/image")
