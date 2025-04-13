@@ -29,6 +29,7 @@ async def health_check():
     return {"status": "ok"}
 
 
+@app.post("/api/v1/embeddings")
 @app.post("/api/marqo-fashionsiglip/image")
 async def embed_image(
     query: ImageQuery,

@@ -63,10 +63,13 @@ export IMAGE_URL1="https://dev-mush-frontend-authstack-profilebucket8bf528d8-osj
 export IMAGE_URL2="https://dev-mush-frontend-authstack-profilebucket8bf528d8-osju5g4in0xb.s3.eu-central-1.amazonaws.com/fb00bcea-964c-43e4-9e3b-09e4ccf845fa.png"
 
 # Multiple images
-curl -s -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/image" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"image_urls\":[\"$IMAGE_URL1\",\"$IMAGE_URL2\"]}"
+curl -s -X POST "http://$REMOTE_HOST/api/v1/embeddings" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"image_urls\":[\"$IMAGE_URL1\",\"$IMAGE_URL2\"]}"
 
 # Single image
-curl -s -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/image" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"image_urls\":[\"$IMAGE_URL1\"]}"
+curl -s -X POST "http://$REMOTE_HOST/api/v1/embeddings" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"image_urls\":[\"$IMAGE_URL1\"]}"
+
+# Example using the new /embeddings endpoint
+curl -s -X POST "http://$REMOTE_HOST/api/v1/embeddings" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"image_urls\":[\"$IMAGE_URL1\"]}"
 ```
 
 ### Text Embedding
