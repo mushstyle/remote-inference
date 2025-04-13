@@ -50,6 +50,7 @@ async def embed_image(
     }
 
 
+@app.post("/api/v1/text-embeddings")
 @app.post("/api/marqo-fashionsiglip/text")
 async def embed_text(
     query: TextQuery,
