@@ -85,6 +85,9 @@ curl -s -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/text" -H "Content-T
 
 # Single text
 curl -s -X POST "http://$REMOTE_HOST/api/marqo-fashionsiglip/text" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"texts\":[\"$TEXT1\"]}"
+
+# Example using the new /api/v1/text-embeddings endpoint
+curl -s -X POST "http://$REMOTE_HOST/api/v1/text-embeddings" -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" -d "{\"texts\":[\"$TEXT1\"]}"
 ```
 
 ### Response Format
