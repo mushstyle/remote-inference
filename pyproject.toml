@@ -3,35 +3,53 @@ name = "remote-inference"
 version = "0.1.0"
 description = "Remote inference package"
 requires-python = ">=3.7"
+# Pinning dependencies based on the working environment freeze
 dependencies = [
-    "fastapi",
-    "uvicorn",
-    "python-multipart",  # for file uploads
-    "pydantic>=2.0",
-    "python-dotenv",
-    "requests",
+    "fastapi==0.115.12",
+    "uvicorn==0.34.0",
+    "python-multipart==0.0.20",
+    "pydantic==2.11.1", # Uses Pydantic v2
+    "python-dotenv==1.1.0",
+    "requests==2.32.3",
     # Core ML dependencies
-    "torch",
-    "torchvision",
-    "numpy<2",
-    "transformers",
+    "torch==2.6.0",
+    "torchvision==0.21.0", # Requires torch>=2.6, seems compatible
+    "numpy==1.26.4", # <2 constraint met
+    "transformers==4.50.3",
     # Image processing
-    "opencv-python",
-    "pillow",
+    "opencv-python==4.11.0.86",
+    "pillow==11.1.0",
     # ML libraries
-    "timm",
-    "scipy",
-    "scikit-image",
-    "kornia",
-    "einops",
+    "timm==1.0.15",
+    "scipy==1.15.2",
+    "scikit-image==0.25.2",
+    "kornia==0.8.0", # Version from freeze list
+    "einops==0.8.1",
     # ML infrastructure
-    "huggingface-hub>0.25",
-    "accelerate",
+    "huggingface-hub==0.29.3",
+    "accelerate==1.5.2", # Very old version from freeze list!
     # Utils
-    "tqdm",
-    "prettytable",
+    "tqdm==4.67.1",
+    "prettytable==3.16.0",
     # Existing dependencies
-    "open-clip-torch"
+    "open-clip-torch==2.31.0", # Use exact working version
+    # Supporting libraries from freeze list (add if needed, check transitivity)
+    "annotated-types==0.7.0", # Likely pulled in by pydantic/fastapi
+    "anyio==4.9.0", # Likely pulled in by fastapi/uvicorn
+    "click==8.1.8", # Likely pulled in by uvicorn etc.
+    "filelock==3.18.0", # Likely pulled in by huggingface_hub/torch
+    "ftfy==6.3.1", # Likely pulled in by open-clip/transformers
+    "jinja2==3.1.6", # Likely pulled in by torch/transformers?
+    "markupsafe==3.0.2", # Likely pulled in by jinja2
+    "packaging==24.2", # Common utility
+    "pydantic-core==2.33.0", # Pulled in by pydantic
+    "pyyaml==6.0.2", # Common utility
+    "regex==2024.11.6", # Likely pulled in by open-clip/transformers
+    "safetensors==0.5.3", # Common for models
+    "starlette==0.46.1", # Pulled in by fastapi
+    "tokenizers==0.21.1", # Pulled in by transformers
+    "typing-extensions==4.13.0" # Common utility
+    # Note: Excluding nvidia-* packages, triton, etc. as they are system/CUDA related
 ]
 
 [build-system]
