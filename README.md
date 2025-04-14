@@ -20,6 +20,7 @@ API server for remote fashion embeddings.
 
    # Install in development mode
    uv pip install -e .
+   *Note: Recent updates include modifications to `remote_inference/ml.py` and pinning dependencies like `accelerate==1.6.0` for stability.*
    ```
 
 3. Environment configuration:

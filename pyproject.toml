@@ -26,9 +26,8 @@ dependencies = [
     "kornia==0.8.0", # Version from freeze list
     "einops==0.8.1",
     # ML infrastructure
-    "huggingface-hub==0.29.3",
-   # "accelerate==1.5.2", # Very old version from freeze list!
-   "accelerate==1.6.0",
+    "huggingface-hub>0.25",
+    "accelerate==1.6.0",
     # Utils
     "tqdm==4.67.1",
     "prettytable==3.16.0",
