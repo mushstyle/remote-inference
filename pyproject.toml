@@ -14,7 +14,7 @@ dependencies = [
     "torch", # Keep torch less constrained unless issues persist
     "torchvision",
     "numpy<2",
-    "transformers~=4.40.0", # Pin transformers to Jan 2025 release
+    "transformers~=4.41.0", # Pin transformers to Jan 2025 release
     # Image processing
     "opencv-python",
     "pillow",
