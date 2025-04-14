@@ -10,28 +10,28 @@ dependencies = [
     "pydantic>=2.0",
     "python-dotenv",
     "requests",
-    # Core ML dependencies - Constrain versions more tightly
-    "torch", # Keep torch less constrained for now unless issues persist
+    # Core ML dependencies - Pinning to Jan 2025 versions
+    "torch", # Keep torch less constrained unless issues persist
     "torchvision",
     "numpy<2",
-    "transformers<4.41", # Constrain transformers below 4.41 as meta tensor handling evolved
+    "transformers~=4.40.0", # Pin transformers to Jan 2025 release
     # Image processing
     "opencv-python",
     "pillow",
     # ML libraries
-    "timm",
+    "timm", # timm is used by open-clip
     "scipy",
     "scikit-image",
     "kornia",
     "einops",
     # ML infrastructure
-    "huggingface-hub>0.25",
-    "accelerate", # Keep accelerate relatively recent
+    "huggingface-hub>0.25", # Keep relatively recent
+    "accelerate", # Keep relatively recent
     # Utils
     "tqdm",
     "prettytable",
-    # Existing dependencies - *** Pin open-clip-torch ***
-    "open-clip-torch==2.22.0" # Pin to a specific, known stable version
+    # Existing dependencies - *** Pin open-clip-torch to Jan 2025 version ***
+    "open-clip-torch~=2.28.0" # Pin to Jan 2025 release
 ]
 
 [build-system]
