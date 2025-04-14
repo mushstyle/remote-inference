@@ -12,31 +12,44 @@ class FashionEmbedder:
 
     def __init__(self):
         """Initialize the model and processor."""
-        # Determine the device explicitly
-        # Allow overriding via environment variable for flexibility
+        # Determine the preferred device, but let accelerate handle the final placement
         if torch.cuda.is_available() and os.environ.get("DISABLE_CUDA") != "1":
-            self.device = torch.device("cuda")
-            print("FashionEmbedder: Using CUDA device.")
+            self.target_device_type = "cuda"
+            print("FashionEmbedder: Target device type set to CUDA.")
         else:
-            self.device = torch.device("cpu")
-            print("FashionEmbedder: Using CPU device.")
+            self.target_device_type = "cpu"
+            print("FashionEmbedder: Target device type set to CPU.")
 
         # --- Model Loading Strategy ---
-        # 1. Load model explicitly onto CPU first to avoid potential 'meta' device issues
-        #    during the internal `from_pretrained` process, especially with complex models
-        #    that might use libraries like `open-clip` internally.
-        # 2. Move the model to the target device (CPU or CUDA) *after* loading.
-        print("Loading Marqo/marqo-fashionSigLIP model onto CPU...")
+        # Use `device_map="auto"` to let `accelerate` handle device placement.
+        # This is often necessary for models initialized on the 'meta' device,
+        # as `accelerate` knows how to properly transition them.
+        print("Loading Marqo/marqo-fashionSigLIP model using device_map='auto'...")
+        model_load_kwargs = {
+            "trust_remote_code": True,
+            "device_map": "auto", # Let accelerate handle device placement
+        }
+
+        # Optionally use float16 on CUDA for potentially faster inference and lower memory
+        # Note: Check if the specific model supports fp16 well.
+        if self.target_device_type == "cuda":
+            model_load_kwargs["torch_dtype"] = torch.float16
+            print("FashionEmbedder: Using torch_dtype=torch.float16 for CUDA.")
+
+
+        # Load the model using accelerate's automatic device mapping
         self.model = AutoModel.from_pretrained(
             'Marqo/marqo-fashionSigLIP',
-            trust_remote_code=True,
-            # Explicitly load on CPU initially
-            device_map=None # Ensure transformers doesn't automatically use accelerate's device_map='auto' yet
-            # torch_dtype=torch.float16 # Optional: uncomment if using GPU and want fp16
-        ).to(torch.device("cpu")) # Force CPU loading initially
+            **model_load_kwargs
+        )
 
-        print(f"Moving model to target device: {self.device}...")
-        self.model = self.model.to(self.device) # Now move to the final target device
+        # Determine the actual device the model (or its parts) ended up on.
+        # For simple "auto" mapping without multiple GPUs/offloading,
+        # this will likely be cuda:0 or cpu.
+        # We use the device of the first parameter as a proxy.
+        self.device = next(self.model.parameters()).device
+        print(f"FashionEmbedder: Model loaded. Parameters are on device: {self.device}")
+
 
         # Load processor (usually device-agnostic or handled internally)
         print("Loading Marqo/marqo-fashionSigLIP processor...")
@@ -46,7 +59,7 @@ class FashionEmbedder:
         )
 
         self.model.eval() # Set to evaluation mode
-        print("FashionEmbedder initialized successfully.")
+        print(f"FashionEmbedder initialized successfully on device: {self.device}")
 
     @staticmethod
     def open_image(url: str) -> Image.Image:
@@ -54,7 +67,8 @@ class FashionEmbedder:
         try:
             response = requests.get(url, timeout=10) # Add timeout
             response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
-            return Image.open(BytesIO(response.content)).convert('RGB') # Ensure RGB
+            # Ensure conversion to RGB after opening
+            return Image.open(BytesIO(response.content)).convert('RGB')
         except requests.exceptions.RequestException as e:
             print(f"Error fetching image from {url}: {e}")
             raise # Re-raise after logging
@@ -84,6 +98,7 @@ class FashionEmbedder:
 
         # Process valid images
         try:
+            # Ensure inputs are moved to the same device as the model
             processed = self.processor(
                 images=images,
                 padding='max_length', # Consider padding=True for dynamic padding
@@ -91,12 +106,14 @@ class FashionEmbedder:
             ).to(self.device) # Move processed data to the model's device
 
             with torch.no_grad():
-                features = self.model.get_image_features(
-                    processed['pixel_values'],
-                    normalize=True
-                )
-            # Detach, move to CPU, convert to list
-            embeddings = features.detach().cpu().tolist()
+                # If using float16, consider using autocast for potential performance gains
+                with torch.autocast(device_type=self.device.type if self.device.type != 'mps' else 'cpu', enabled=self.model.dtype == torch.float16):
+                    features = self.model.get_image_features(
+                        processed['pixel_values'],
+                        normalize=True
+                    )
+            # Detach, move to CPU, convert to list (converting from potential float16)
+            embeddings = features.detach().cpu().float().tolist()
             return embeddings
         except Exception as e:
             print(f"Error during image embedding inference: {e}")
@@ -110,6 +127,7 @@ class FashionEmbedder:
             return []
 
         try:
+            # Ensure inputs are moved to the same device as the model
             processed = self.processor(
                 text=texts,
                 padding='max_length', # Consider padding=True for dynamic padding
@@ -117,14 +135,16 @@ class FashionEmbedder:
             ).to(self.device) # Move processed data to the model's device
 
             with torch.no_grad():
-                features = self.model.get_text_features(
-                    processed['input_ids'],
-                    # Assuming attention_mask is handled correctly by the processor/model
-                    # attention_mask=processed['attention_mask'], # Usually needed, check model requirements
-                    normalize=True
-                )
-            # Detach, move to CPU, convert to list
-            embeddings = features.detach().cpu().tolist()
+                 # If using float16, consider using autocast
+                with torch.autocast(device_type=self.device.type if self.device.type != 'mps' else 'cpu', enabled=self.model.dtype == torch.float16):
+                    features = self.model.get_text_features(
+                        processed['input_ids'],
+                        # Assuming attention_mask is handled correctly by the processor/model
+                        # attention_mask=processed['attention_mask'], # Usually needed, check model requirements
+                        normalize=True
+                    )
+            # Detach, move to CPU, convert to list (converting from potential float16)
+            embeddings = features.detach().cpu().float().tolist()
             return embeddings
         except Exception as e:
             print(f"Error during text embedding inference: {e}")
@@ -137,6 +157,7 @@ try:
     embedder = FashionEmbedder()
 except Exception as e:
     print(f"FATAL: Failed to initialize FashionEmbedder: {e}")
-    # Depending on the application structure, you might want to exit or raise
-    # For a server, allowing it to start but log the error might be preferable initially.
+    # Log the traceback for more details
+    import traceback
+    traceback.print_exc()
     embedder = None # Set to None to indicate failure
