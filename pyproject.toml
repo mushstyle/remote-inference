@@ -10,11 +10,11 @@ dependencies = [
     "pydantic>=2.0",
     "python-dotenv",
     "requests",
-    # Core ML dependencies
-    "torch",
+    # Core ML dependencies - Constrain versions more tightly
+    "torch", # Keep torch less constrained for now unless issues persist
     "torchvision",
     "numpy<2",
-    "transformers",
+    "transformers<4.41", # Constrain transformers below 4.41 as meta tensor handling evolved
     # Image processing
     "opencv-python",
     "pillow",
@@ -26,12 +26,12 @@ dependencies = [
     "einops",
     # ML infrastructure
     "huggingface-hub>0.25",
-    "accelerate",
+    "accelerate", # Keep accelerate relatively recent
     # Utils
     "tqdm",
     "prettytable",
-    # Existing dependencies
-    "open-clip-torch"
+    # Existing dependencies - *** Pin open-clip-torch ***
+    "open-clip-torch==2.20.0" # Pin to a specific, known stable version
 ]
 
 [build-system]
