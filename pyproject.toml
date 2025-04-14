@@ -31,7 +31,7 @@ dependencies = [
     "tqdm",
     "prettytable",
     # Existing dependencies - *** Pin open-clip-torch ***
-    "open-clip-torch==2.20.0" # Pin to a specific, known stable version
+    "open-clip-torch==2.22.0" # Pin to a specific, known stable version
 ]
 
 [build-system]
