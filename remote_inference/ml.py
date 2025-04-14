@@ -6,13 +6,14 @@ import requests
 from PIL import Image
 from io import BytesIO
 import os # Import os to check environment variables potentially controlling device
+import traceback # For improved error logging
 
 class FashionEmbedder:
     """Fashion embedding model using Marqo FashionSigLIP."""
 
     def __init__(self):
         """Initialize the model and processor."""
-        # Determine the preferred device, but let accelerate handle the final placement
+        # Determine the preferred device type
         if torch.cuda.is_available() and os.environ.get("DISABLE_CUDA") != "1":
             self.target_device_type = "cuda"
             print("FashionEmbedder: Target device type set to CUDA.")
@@ -21,35 +22,53 @@ class FashionEmbedder:
             print("FashionEmbedder: Target device type set to CPU.")
 
         # --- Model Loading Strategy ---
-        # Use `device_map="auto"` to let `accelerate` handle device placement.
-        # This is often necessary for models initialized on the 'meta' device,
-        # as `accelerate` knows how to properly transition them.
-        print("Loading Marqo/marqo-fashionSigLIP model using device_map='auto'...")
+        # Explicitly load to CPU first, then move to target device.
+        # Avoid device_map="auto" as it seems problematic with the specific
+        # combination of old accelerate, new torch/transformers, and potentially the newer driver.
+        print("Loading Marqo/marqo-fashionSigLIP model explicitly onto CPU...")
         model_load_kwargs = {
             "trust_remote_code": True,
-            "device_map": "auto", # Let accelerate handle device placement
+            # No device_map="auto"
+            # No torch_dtype here (apply later if needed)
         }
 
-        # Optionally use float16 on CUDA for potentially faster inference and lower memory
-        # Note: Check if the specific model supports fp16 well.
-        if self.target_device_type == "cuda":
-            model_load_kwargs["torch_dtype"] = torch.float16
-            print("FashionEmbedder: Using torch_dtype=torch.float16 for CUDA.")
+        # Load the model explicitly to CPU first
+        try:
+            self.model = AutoModel.from_pretrained(
+                'Marqo/marqo-fashionSigLIP',
+                **model_load_kwargs
+            ).to("cpu") # Force to CPU after loading
+            print("Model loaded to CPU successfully.")
+        except Exception as e:
+            print(f"Error during initial model loading: {e}")
+            raise # Re-raise to prevent proceeding with a non-loaded model
+
+        self.device = torch.device(self.target_device_type) # Get target device (cuda or cpu)
+
+        # Move model from CPU to the target device
+        try:
+            print(f"Moving model from CPU to target device: {self.device}...")
+            self.model = self.model.to(self.device) # Move to target device
+            print("Model moved to target device successfully.")
+        except Exception as e:
+            print(f"Error moving model to device {self.device}: {e}")
+            # Handle error appropriately, maybe fall back to CPU?
+            # For now, just raise to make the failure clear.
+            raise
+
+        # If using CUDA and want float16, cast *after* moving to GPU
+        # Note: Ensure the model supports .half() correctly.
+        if self.device.type == "cuda":
+            try:
+                print("Converting model to float16 on CUDA device...")
+                self.model = self.model.half() # Use .half() for float16
+                print("Model converted to float16 successfully.")
+            except Exception as e:
+                 print(f"Warning: Could not convert model to float16: {e}. Proceeding with float32.")
+                 # Continue with the model in float32 if half() fails
 
 
-        # Load the model using accelerate's automatic device mapping
-        self.model = AutoModel.from_pretrained(
-            'Marqo/marqo-fashionSigLIP',
-            **model_load_kwargs
-        )
-
-        # Determine the actual device the model (or its parts) ended up on.
-        # For simple "auto" mapping without multiple GPUs/offloading,
-        # this will likely be cuda:0 or cpu.
-        # We use the device of the first parameter as a proxy.
-        self.device = next(self.model.parameters()).device
-        print(f"FashionEmbedder: Model loaded. Parameters are on device: {self.device}")
-
+        print(f"FashionEmbedder: Model initialization process complete. Final model device: {self.device}, dtype: {self.model.dtype}")
 
         # Load processor (usually device-agnostic or handled internally)
         print("Loading Marqo/marqo-fashionSigLIP processor...")
@@ -59,7 +78,7 @@ class FashionEmbedder:
         )
 
         self.model.eval() # Set to evaluation mode
-        print(f"FashionEmbedder initialized successfully on device: {self.device}")
+        print(f"FashionEmbedder ready.")
 
     @staticmethod
     def open_image(url: str) -> Image.Image:
@@ -106,14 +125,20 @@ class FashionEmbedder:
             ).to(self.device) # Move processed data to the model's device
 
             with torch.no_grad():
-                # If using float16, consider using autocast for potential performance gains
-                with torch.autocast(device_type=self.device.type if self.device.type != 'mps' else 'cpu', enabled=self.model.dtype == torch.float16):
+                # Use autocast if model ended up in float16
+                current_dtype = self.model.dtype
+                use_autocast = current_dtype == torch.float16 and self.device.type != 'mps'
+                with torch.autocast(device_type=self.device.type if self.device.type != 'mps' else 'cpu', enabled=use_autocast):
                     features = self.model.get_image_features(
                         processed['pixel_values'],
                         normalize=True
                     )
-            # Detach, move to CPU, convert to list (converting from potential float16)
-            embeddings = features.detach().cpu().float().tolist()
+                    # Explicitly cast back to float32 if autocast was used, before moving to CPU
+                    if use_autocast:
+                        features = features.float()
+
+            # Detach, move to CPU, convert to list
+            embeddings = features.detach().cpu().tolist() # Already float32 if autocast was used correctly
             return embeddings
         except Exception as e:
             print(f"Error during image embedding inference: {e}")
@@ -135,16 +160,22 @@ class FashionEmbedder:
             ).to(self.device) # Move processed data to the model's device
 
             with torch.no_grad():
-                 # If using float16, consider using autocast
-                with torch.autocast(device_type=self.device.type if self.device.type != 'mps' else 'cpu', enabled=self.model.dtype == torch.float16):
+                # Use autocast if model ended up in float16
+                current_dtype = self.model.dtype
+                use_autocast = current_dtype == torch.float16 and self.device.type != 'mps'
+                with torch.autocast(device_type=self.device.type if self.device.type != 'mps' else 'cpu', enabled=use_autocast):
                     features = self.model.get_text_features(
                         processed['input_ids'],
                         # Assuming attention_mask is handled correctly by the processor/model
                         # attention_mask=processed['attention_mask'], # Usually needed, check model requirements
                         normalize=True
                     )
-            # Detach, move to CPU, convert to list (converting from potential float16)
-            embeddings = features.detach().cpu().float().tolist()
+                    # Explicitly cast back to float32 if autocast was used, before moving to CPU
+                    if use_autocast:
+                        features = features.float()
+
+            # Detach, move to CPU, convert to list
+            embeddings = features.detach().cpu().tolist() # Already float32 if autocast was used correctly
             return embeddings
         except Exception as e:
             print(f"Error during text embedding inference: {e}")
@@ -158,6 +189,5 @@ try:
 except Exception as e:
     print(f"FATAL: Failed to initialize FashionEmbedder: {e}")
     # Log the traceback for more details
-    import traceback
     traceback.print_exc()
     embedder = None # Set to None to indicate failure
