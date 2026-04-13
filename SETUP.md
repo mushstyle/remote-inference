@@ -46,3 +46,30 @@ The service listens on port 8000 by default.
 ```bash
 curl http://localhost:8000/health
 ```
+
+## SSH Access
+
+The following public keys should be added to `~/.ssh/authorized_keys` on each GPU instance to allow SSH access from authorized machines:
+
+```
+# tim local
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE96qyv1tYzb0/CsmLPDJ46JK9qC3huXPptALFYVRIQQ blah@blahs-MacBook-Air.local
+
+# will local
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIzOqRsrojm2IH1U4b47MQcDfg77FLUuQFZcjB9+Kkg/ williamgalebach@Williams-MacBook-Air-2022.local
+
+# dev server
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILgHZV60fAwYkr1k0doJwfIxToVNwNUr1Pv2CBCfE+0H tim@development-server
+```
+
+To add these keys on a GPU instance:
+
+```bash
+mkdir -p ~/.ssh
+cat >> ~/.ssh/authorized_keys << 'KEYS'
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE96qyv1tYzb0/CsmLPDJ46JK9qC3huXPptALFYVRIQQ blah@blahs-MacBook-Air.local
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIzOqRsrojm2IH1U4b47MQcDfg77FLUuQFZcjB9+Kkg/ williamgalebach@Williams-MacBook-Air-2022.local
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILgHZV60fAwYkr1k0doJwfIxToVNwNUr1Pv2CBCfE+0H tim@development-server
+KEYS
+chmod 600 ~/.ssh/authorized_keys
+```
