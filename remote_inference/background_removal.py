@@ -1,6 +1,7 @@
 """Background removal using BiRefNet."""
 import base64
 import io
+import os
 import time
 from typing import Tuple, Union
 import torch
@@ -9,6 +10,19 @@ from transformers import AutoModelForImageSegmentation
 from PIL import Image
 import requests
 from pydantic import HttpUrl
+
+
+BROWSER_REQUEST_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/138.0.0.0 Safari/537.36"
+    )
+}
+IMAGE_DOWNLOAD_TIMEOUT = (
+    float(os.getenv("IMAGE_DOWNLOAD_CONNECT_TIMEOUT_SECONDS", "5")),
+    float(os.getenv("IMAGE_DOWNLOAD_READ_TIMEOUT_SECONDS", "15")),
+)
 
 
 class BackgroundRemover:
@@ -51,7 +65,11 @@ class BackgroundRemover:
     def load_image_from_url(self, url: Union[str, HttpUrl]) -> Image.Image:
         """Load an image from a URL."""
         # Standard request without streaming for reliability
-        response = requests.get(str(url))
+        response = requests.get(
+            str(url),
+            headers=BROWSER_REQUEST_HEADERS,
+            timeout=IMAGE_DOWNLOAD_TIMEOUT
+        )
         response.raise_for_status()
         image_bytes = io.BytesIO(response.content)
         return Image.open(image_bytes).convert('RGB')
