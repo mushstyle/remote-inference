@@ -121,7 +121,7 @@ The endpoint returns a PNG image with transparent background. Any errors will be
 
 Background removal runs in a bounded queue so synchronous GPU work does not block
 the FastAPI event loop or health checks. The defaults allow one active GPU job and
-six total active or queued requests per worker. Additional requests receive HTTP
+twelve total active or queued requests per worker. Additional requests receive HTTP
 503 with `Retry-After: 5`. Source image downloads use a 5-second connect timeout
 and a 15-second read timeout. These values can be changed with the corresponding
 variables in `.env.example`.
